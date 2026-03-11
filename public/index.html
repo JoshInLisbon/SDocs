@@ -479,9 +479,6 @@ body.read-mode #right {
   color: var(--text-2);
   border-bottom: 1px solid var(--border);
   background: var(--bg-panel);
-  position: sticky;
-  top: 0;
-  z-index: 5;
 }
 
 /* ── Panel sections ── */
@@ -1246,42 +1243,28 @@ function applyCtrl(id) {
       renderedEl.style.setProperty('--md-base-size', v + 'px'); break;
     case 'ctrl-line-height-num':
       renderedEl.style.setProperty('--md-line-height', v); break;
-    case 'ctrl-color':
-      renderedEl.style.setProperty('--md-color', v); break;
     case 'ctrl-h-font-family':
       renderedEl.style.setProperty('--md-h-font-family', v); break;
     case 'ctrl-h-scale-num':
       renderedEl.style.setProperty('--md-h-scale', v); break;
     case 'ctrl-h-mb-num':
       renderedEl.style.setProperty('--md-h-margin-bottom', v + 'em'); break;
-    case 'ctrl-h-color':
-      renderedEl.style.setProperty('--md-h-color', v); break;
     case 'ctrl-h1-size-num':
       renderedEl.style.setProperty('--md-h1-size', v + 'em'); break;
-    case 'ctrl-h1-color':
-      renderedEl.style.setProperty('--md-h1-color', v); break;
     case 'ctrl-h1-weight':
       renderedEl.style.setProperty('--md-h1-weight', v); break;
     case 'ctrl-h2-size-num':
       renderedEl.style.setProperty('--md-h2-size', v + 'em'); break;
-    case 'ctrl-h2-color':
-      renderedEl.style.setProperty('--md-h2-color', v); break;
     case 'ctrl-h2-weight':
       renderedEl.style.setProperty('--md-h2-weight', v); break;
     case 'ctrl-h3-size-num':
       renderedEl.style.setProperty('--md-h3-size', v + 'em'); break;
-    case 'ctrl-h3-color':
-      renderedEl.style.setProperty('--md-h3-color', v); break;
     case 'ctrl-h3-weight':
       renderedEl.style.setProperty('--md-h3-weight', v); break;
     case 'ctrl-h4-size-num':
       renderedEl.style.setProperty('--md-h4-size', v + 'em'); break;
-    case 'ctrl-h4-color':
-      renderedEl.style.setProperty('--md-h4-color', v); break;
     case 'ctrl-h4-weight':
       renderedEl.style.setProperty('--md-h4-weight', v); break;
-    case 'ctrl-p-color':
-      renderedEl.style.setProperty('--md-p-color', v); break;
     case 'ctrl-p-lh-num':
       renderedEl.style.setProperty('--md-p-line-height', v); break;
     case 'ctrl-p-mb-num':
@@ -1305,8 +1288,6 @@ function applyCtrl(id) {
     }
     case 'ctrl-bq-color':
       renderedEl.style.setProperty('--md-bq-color', v); break;
-    case 'ctrl-list-color':
-      renderedEl.style.setProperty('--md-list-color', v); break;
     case 'ctrl-list-spacing-num':
       renderedEl.style.setProperty('--md-list-spacing', v + 'em'); break;
     case 'ctrl-list-indent-num':
@@ -1339,49 +1320,83 @@ function linkRangeNum(rangeId, numId) {
 
 [
   'ctrl-font-family','ctrl-h-font-family',
-  'ctrl-color','ctrl-h-color',
-  'ctrl-h1-color','ctrl-h1-weight',
-  'ctrl-h2-color','ctrl-h2-weight',
-  'ctrl-h3-color','ctrl-h3-weight',
-  'ctrl-h4-color','ctrl-h4-weight',
-  'ctrl-p-color','ctrl-link-color','ctrl-link-decoration',
+  'ctrl-h1-weight','ctrl-h2-weight','ctrl-h3-weight','ctrl-h4-weight',
+  'ctrl-link-color','ctrl-link-decoration',
   'ctrl-code-font','ctrl-code-bg','ctrl-code-color',
   'ctrl-bq-border-color','ctrl-bq-color',
-  'ctrl-list-color',
 ].forEach(id => {
   document.getElementById(id).addEventListener('input',  () => applyCtrl(id));
   document.getElementById(id).addEventListener('change', () => applyCtrl(id));
 });
 
 // ═══════════════════════════════════════════════════════
-//  RESET BUTTONS
+//  COLOR CASCADE
 // ═══════════════════════════════════════════════════════
-// Remove a CSS var override and sync the color control to the inherited value.
-// parentCtrlId is the control whose current value we show after reset
-// (the colour this element will now inherit from).
-function wireReset(btnId, cssVar, getParentColor) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  // derive the ctrl id from the btn id: "reset-foo" → "ctrl-foo"
-  const ctrlId = btnId.replace('reset-', 'ctrl-');
-  btn.addEventListener('click', () => {
-    renderedEl.style.removeProperty(cssVar);
-    const inherited = getParentColor();
-    const ctrl = document.getElementById(ctrlId);
-    if (ctrl) ctrl.value = inherited;
-  });
+const COLOR_DEFAULT = '#1c1917';
+
+const COLOR_VAR = {
+  'ctrl-color':      '--md-color',
+  'ctrl-h-color':    '--md-h-color',
+  'ctrl-h1-color':   '--md-h1-color',
+  'ctrl-h2-color':   '--md-h2-color',
+  'ctrl-h3-color':   '--md-h3-color',
+  'ctrl-h4-color':   '--md-h4-color',
+  'ctrl-p-color':    '--md-p-color',
+  'ctrl-list-color': '--md-list-color',
+};
+
+// Direct children in the cascade tree
+const COLOR_CHILDREN = {
+  'ctrl-color':   ['ctrl-h-color', 'ctrl-p-color'],
+  'ctrl-h-color': ['ctrl-h1-color', 'ctrl-h2-color', 'ctrl-h3-color', 'ctrl-h4-color'],
+  'ctrl-p-color': ['ctrl-list-color'],
+};
+
+// Tracks controls the user has explicitly set (breaking from cascade)
+const overriddenColors = new Set();
+
+// Set a color: updates CSS var, picker, and cascades to non-overridden children.
+// userAction=true marks this control as independently set (breaking from parent cascade).
+function setColorValue(ctrlId, value, userAction = false) {
+  if (userAction) overriddenColors.add(ctrlId);
+  renderedEl.style.setProperty(COLOR_VAR[ctrlId], value);
+  const ctrl = document.getElementById(ctrlId);
+  if (ctrl) ctrl.value = value;
+  for (const childId of (COLOR_CHILDREN[ctrlId] || [])) {
+    if (!overriddenColors.has(childId)) {
+      setColorValue(childId, value, false);
+    }
+  }
 }
 
-// Cascade: --md-color → --md-h-color → --md-h[1-4]-color
-//          --md-color → --md-p-color → --md-list-color
-wireReset('reset-color',      '--md-color',      () => '#1c1917');
-wireReset('reset-h-color',    '--md-h-color',    () => gv('ctrl-color')  || '#1c1917');
-wireReset('reset-h1-color',   '--md-h1-color',   () => gv('ctrl-h-color') || gv('ctrl-color') || '#1c1917');
-wireReset('reset-h2-color',   '--md-h2-color',   () => gv('ctrl-h-color') || gv('ctrl-color') || '#1c1917');
-wireReset('reset-h3-color',   '--md-h3-color',   () => gv('ctrl-h-color') || gv('ctrl-color') || '#1c1917');
-wireReset('reset-h4-color',   '--md-h4-color',   () => gv('ctrl-h-color') || gv('ctrl-color') || '#1c1917');
-wireReset('reset-p-color',    '--md-p-color',    () => gv('ctrl-color')  || '#1c1917');
-wireReset('reset-list-color', '--md-list-color', () => gv('ctrl-p-color') || gv('ctrl-color') || '#1c1917');
+// Reset a control to page-load default; removes override status so it rejoins cascade.
+function resetColorValue(ctrlId) {
+  overriddenColors.delete(ctrlId);
+  // Find the parent's current value so the reset reflects what the parent shows now
+  const parentId = Object.entries(COLOR_CHILDREN).find(([,ch]) => ch.includes(ctrlId))?.[0];
+  const targetValue = parentId
+    ? (document.getElementById(parentId)?.value || COLOR_DEFAULT)
+    : COLOR_DEFAULT;
+  setColorValue(ctrlId, targetValue, false);
+}
+
+// Wire color inputs — user changing a picker marks it as overridden
+Object.keys(COLOR_VAR).forEach(ctrlId => {
+  const el = document.getElementById(ctrlId);
+  if (!el) return;
+  el.addEventListener('input',  () => setColorValue(ctrlId, el.value, true));
+  el.addEventListener('change', () => setColorValue(ctrlId, el.value, true));
+});
+
+// Wire reset buttons
+document.getElementById('reset-color').addEventListener('click',      () => { overriddenColors.delete('ctrl-color'); setColorValue('ctrl-color', COLOR_DEFAULT, false); });
+document.getElementById('reset-h-color').addEventListener('click',    () => resetColorValue('ctrl-h-color'));
+document.getElementById('reset-h1-color').addEventListener('click',   () => resetColorValue('ctrl-h1-color'));
+document.getElementById('reset-h2-color').addEventListener('click',   () => resetColorValue('ctrl-h2-color'));
+document.getElementById('reset-h3-color').addEventListener('click',   () => resetColorValue('ctrl-h3-color'));
+document.getElementById('reset-h4-color').addEventListener('click',   () => resetColorValue('ctrl-h4-color'));
+document.getElementById('reset-p-color').addEventListener('click',    () => resetColorValue('ctrl-p-color'));
+document.getElementById('reset-list-color').addEventListener('click', () => resetColorValue('ctrl-list-color'));
 
 // ═══════════════════════════════════════════════════════
 //  APPLY STYLES FROM META → CONTROLS
@@ -1409,17 +1424,22 @@ function applyStylesFromMeta(s) {
   }
   if (s.baseFontSize) setCtrl('ctrl-base-size-num', s.baseFontSize);
   if (s.lineHeight)   setCtrl('ctrl-line-height-num', s.lineHeight);
-  if (s.color)        setCtrl('ctrl-color', s.color);
+  // Apply colors through cascade system so pickers stay in sync.
+  // Reset all first so non-specified colors re-cascade from body.
+  overriddenColors.clear();
+  setColorValue('ctrl-color', COLOR_DEFAULT, false);
+
+  if (s.color) setColorValue('ctrl-color', s.color, true);
 
   const h = s.headers || {};
   if (h.scale)        setCtrl('ctrl-h-scale-num', h.scale);
   if (h.marginBottom) setCtrl('ctrl-h-mb-num', h.marginBottom);
-  if (h.color)        setCtrl('ctrl-h-color', h.color);
+  if (h.color)        setColorValue('ctrl-h-color', h.color, true);
 
   ['h1','h2','h3','h4'].forEach(t => {
     const hs = s[t] || {};
     if (hs.fontSize)    setCtrl(`ctrl-${t}-size-num`, hs.fontSize);
-    if (hs.color)       setCtrl(`ctrl-${t}-color`, hs.color);
+    if (hs.color)       setColorValue(`ctrl-${t}-color`, hs.color, true);
     if (hs.fontWeight) {
       const el = document.getElementById(`ctrl-${t}-weight`);
       if (el) { el.value = String(hs.fontWeight); applyCtrl(`ctrl-${t}-weight`); }
@@ -1427,7 +1447,7 @@ function applyStylesFromMeta(s) {
   });
 
   const p = s.p || {};
-  if (p.color)        setCtrl('ctrl-p-color', p.color);
+  if (p.color) setColorValue('ctrl-p-color', p.color, true);
   if (p.lineHeight)   setCtrl('ctrl-p-lh-num', p.lineHeight);
   if (p.marginBottom) setCtrl('ctrl-p-mb-num', p.marginBottom);
 
@@ -1796,6 +1816,9 @@ Visit [Markdown Guide](https://www.markdownguide.org) for syntax reference.
 2. Adjust sizes, colors, spacing
 3. Export and share
 `;
+
+// Prime all color CSS vars and pickers from the cascade default
+setColorValue('ctrl-color', COLOR_DEFAULT, false);
 
 loadText(DEFAULT_MD);
 </script>
