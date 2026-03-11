@@ -1,0 +1,37 @@
+---
+title: "Sample Styled Document"
+author: "Markdown Studio"
+styles:
+  fontFamily: Inter
+  baseFontSize: 16
+  lineHeight: 1.75
+  color: "#1c1917"
+  headers:
+    scale: 1.0
+    marginBottom: 0.4
+    color: "#0f0d0c"
+  h1: { fontSize: 2.1, color: "#0f0d0c", fontWeight: 700 }
+  h2: { fontSize: 1.55, color: "#0f0d0c", fontWeight: 600 }
+  h3: { fontSize: 1.2, color: "#0f0d0c", fontWeight: 600 }
+  p: { lineHeight: 1.75, marginBottom: 1.1 }
+  link: { color: "#2563eb", decoration: "underline" }
+  blockquote: { borderColor: "#2563eb", borderWidth: 3, color: "#6b6560" }
+---
+# Sample Styled Document
+
+This document demonstrates the **Styled Markdown** format used by Markdown Studio.
+
+## Format
+
+Styles are stored as YAML front matter using the `styles` key — the same standard used by Jekyll, Hugo, Obsidian, and Gatsby.
+
+> Drop this file back onto Markdown Studio to restore both content and styles automatically.
+
+## Code example
+
+```js
+const { meta, body } = parseFrontMatter(text);
+console.log(meta.styles.fontFamily); // "Inter"
+```
+
+Done.

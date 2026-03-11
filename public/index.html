@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS  (Cursor-inspired warm neutral palette)
+═══════════════════════════════════════════════════ */
+:root {
+  --bg:            #F7F5F2;
+  --bg-surface:    #F1EDE8;
+  --bg-panel:      #EDE8E2;
+  --bg-panel-deep: #E7E2DB;
+  --bg-input:      #FFFFFF;
+  --bg-hover:      #E8E3DD;
+  --bg-active:     #E2DDD6;
+
+  --border:        #D4CFC9;
+  --border-subtle: #DDD9D3;
+  --border-strong: #C5BFB8;
+
+  --text:          #1C1917;
+  --text-2:        #57534E;
+  --text-3:        #A8A29E;
+  --text-inv:      #FAFAF9;
+
+  --accent:        #2563EB;
+  --accent-light:  #EEF2FF;
+  --accent-text:   #1D4ED8;
+
+  --radius-sm:     4px;
+  --radius:        6px;
+  --radius-md:     8px;
+  --radius-lg:     10px;
+
+  --shadow-sm:     0 1px 2px rgba(28,25,23,.06);
+  --shadow:        0 2px 6px rgba(28,25,23,.08), 0 1px 2px rgba(28,25,23,.04);
+  --shadow-md:     0 4px 12px rgba(28,25,23,.10), 0 2px 4px rgba(28,25,23,.06);
+
+  --font-ui:       'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════════════════ */
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 44px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+  overflow: hidden;
+  transition: height .3s cubic-bezier(.4,0,.2,1),
+              opacity .22s ease,
+              box-shadow .3s ease;
+}
+body.read-mode #topbar {
+  height: 0;
+  opacity: 0;
+  box-shadow: none;
+}
+
+#topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: auto;
+}
+
+#topbar-brand svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+#topbar-brand h1 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  line-height: 1;
+  transition: background .12s, border-color .12s, color .12s, box-shadow .12s;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+.btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.btn:active { background: var(--bg-active); }
+.btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-inv);
+  box-shadow: 0 1px 3px rgba(37,99,235,.25);
+}
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--text-2);
+}
+.btn.ghost:hover {
+  background: var(--bg-hover);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════════════════════ */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════
+   LEFT PANEL
+═══════════════════════════════════════════════════ */
+#left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-input);
+}
+
+#left-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.toggle-group {
+  display: flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  padding: 2px;
+  gap: 2px;
+}
+.toggle-group .btn {
+  border: none;
+  border-radius: calc(var(--radius) - 2px);
+  box-shadow: none;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.toggle-group .btn.active {
+  background: var(--bg-input);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.toggle-group .btn:hover:not(.active) {
+  background: var(--bg-hover);
+  border-color: transparent;
+  color: var(--text);
+}
+
+#drop-hint {
+  font-size: 11.5px;
+  color: var(--text-3);
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#content-area {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+/* drag overlay */
+#content-area.drag-over::after {
+  content: 'Drop file to load';
+  position: absolute;
+  inset: 0;
+  background: rgba(37,99,235,.06);
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--accent);
+  pointer-events: none;
+  z-index: 10;
+  margin: 8px;
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDERED MARKDOWN
+═══════════════════════════════════════════════════ */
+#rendered {
+  padding: 40px 48px 60px;
+  max-width: 760px;
+  margin: 0 auto;
+
+  --md-font-family:    'Inter', system-ui, sans-serif;
+  --md-base-size:      16px;
+  --md-line-height:    1.75;
+  --md-color:          #1C1917;
+  --md-h-font-family:  inherit;
+  --md-h-scale:        1;
+  --md-h-margin-bottom: 0.4em;
+  --md-h-color:        #0F0D0C;
+  --md-h1-size:        2.1em;
+  --md-h1-color:       var(--md-h-color);
+  --md-h1-margin:      0 0 0.3em;
+  --md-h1-weight:      700;
+  --md-h2-size:        1.55em;
+  --md-h2-color:       var(--md-h-color);
+  --md-h2-margin:      1.4em 0 0.3em;
+  --md-h2-weight:      600;
+  --md-h3-size:        1.2em;
+  --md-h3-color:       var(--md-h-color);
+  --md-h3-margin:      1.2em 0 0.3em;
+  --md-h3-weight:      600;
+  --md-h4-size:        1.0em;
+  --md-h4-color:       var(--md-h-color);
+  --md-h4-margin:      1.0em 0 0.25em;
+  --md-h4-weight:      600;
+  --md-p-color:        #3C3733;
+  --md-p-line-height:  var(--md-line-height);
+  --md-p-margin:       0 0 1.1em;
+  --md-link-color:     #2563EB;
+  --md-link-decoration: underline;
+  --md-code-bg:        #F4F1ED;
+  --md-code-color:     #6B21A8;
+  --md-code-padding:   0.15em 0.45em;
+  --md-code-radius:    4px;
+  --md-code-font:      'JetBrains Mono', 'Fira Mono', monospace;
+  --md-pre-bg:         #F4F1ED;
+  --md-pre-padding:    1.1em 1.25em;
+  --md-bq-border:      3px solid #2563EB;
+  --md-bq-color:       #6B6560;
+  --md-bq-padding:     0.5em 1em;
+  --md-bq-margin:      1.2em 0;
+
+  font-family: var(--md-font-family);
+  font-size: var(--md-base-size);
+  color: var(--md-color);
+  line-height: var(--md-line-height);
+}
+#rendered h1 {
+  font-family: var(--md-h-font-family);
+  font-size: calc(var(--md-h1-size) * var(--md-h-scale));
+  color: var(--md-h1-color);
+  margin: var(--md-h1-margin);
+  font-weight: var(--md-h1-weight);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+#rendered h2 {
+  font-family: var(--md-h-font-family);
+  font-size: calc(var(--md-h2-size) * var(--md-h-scale));
+  color: var(--md-h2-color);
+  margin: var(--md-h2-margin);
+  font-weight: var(--md-h2-weight);
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #EDE8E2;
+}
+#rendered h3 {
+  font-family: var(--md-h-font-family);
+  font-size: calc(var(--md-h3-size) * var(--md-h-scale));
+  color: var(--md-h3-color);
+  margin: var(--md-h3-margin);
+  font-weight: var(--md-h3-weight);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+#rendered h4 {
+  font-family: var(--md-h-font-family);
+  font-size: calc(var(--md-h4-size) * var(--md-h-scale));
+  color: var(--md-h4-color);
+  margin: var(--md-h4-margin);
+  font-weight: var(--md-h4-weight);
+  line-height: 1.5;
+}
+#rendered p {
+  color: var(--md-p-color);
+  line-height: var(--md-p-line-height);
+  margin: var(--md-p-margin);
+}
+#rendered a {
+  color: var(--md-link-color);
+  text-decoration: var(--md-link-decoration);
+  text-underline-offset: 2px;
+}
+#rendered a:hover { opacity: .8; }
+#rendered code {
+  background: var(--md-code-bg);
+  color: var(--md-code-color);
+  padding: var(--md-code-padding);
+  border-radius: var(--md-code-radius);
+  font-family: var(--md-code-font);
+  font-size: 0.85em;
+}
+#rendered pre {
+  background: var(--md-pre-bg);
+  padding: var(--md-pre-padding);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin: 1.2em 0;
+  border: 1px solid #E7E2DB;
+}
+#rendered pre code {
+  background: none;
+  padding: 0;
+  color: #3C3733;
+  font-size: 0.88em;
+}
+#rendered blockquote {
+  border-left: var(--md-bq-border);
+  color: var(--md-bq-color);
+  padding: var(--md-bq-padding);
+  margin: var(--md-bq-margin);
+  background: #F7F5F2;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+#rendered blockquote p { margin: 0; color: inherit; }
+#rendered ul, #rendered ol {
+  padding-left: 1.6em;
+  margin: 0.5em 0 1.1em;
+}
+#rendered li { margin-bottom: 0.3em; }
+#rendered li::marker { color: var(--text-3); }
+#rendered hr {
+  border: none;
+  border-top: 1px solid #EDE8E2;
+  margin: 2em 0;
+}
+#rendered table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.2em 0;
+  font-size: 0.92em;
+}
+#rendered th, #rendered td {
+  border: 1px solid #E2DDD6;
+  padding: 7px 12px;
+  text-align: left;
+}
+#rendered th {
+  background: #F4F1ED;
+  font-weight: 600;
+  color: var(--text);
+}
+#rendered tr:nth-child(even) td { background: #FAFAF8; }
+#rendered img { max-width: 100%; border-radius: var(--radius-md); }
+
+/* Raw textarea */
+#raw {
+  display: none;
+  width: 100%;
+  height: 100%;
+  padding: 40px 48px;
+  background: var(--bg-input);
+  color: var(--text);
+  border: none;
+  resize: none;
+  font-family: 'JetBrains Mono', 'Fira Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   DIVIDER (resize handle aesthetic)
+═══════════════════════════════════════════════════ */
+#divider {
+  width: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: width .32s cubic-bezier(.4,0,.2,1);
+}
+body.read-mode #divider { width: 0; }
+
+/* ═══════════════════════════════════════════════════
+   RIGHT PANEL
+═══════════════════════════════════════════════════ */
+#right {
+  width: 288px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  transition: width .32s cubic-bezier(.4,0,.2,1),
+              opacity .25s ease;
+}
+body.read-mode #right {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+#right::-webkit-scrollbar { width: 5px; }
+#right::-webkit-scrollbar-track { background: transparent; }
+#right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+#right-header {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* ── Panel sections ── */
+.panel-section { border-bottom: 1px solid var(--border-subtle); }
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  transition: background .1s;
+}
+.panel-header:hover { background: var(--bg-hover); }
+.panel-header .arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: var(--text-3);
+  transition: transform .18s cubic-bezier(.4,0,.2,1);
+  flex-shrink: 0;
+}
+.panel-header.open .arrow { transform: rotate(90deg); }
+.panel-header .section-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 9px;
+}
+
+.panel-body { display: none; padding: 10px 12px 12px; }
+.panel-body.open { display: block; }
+
+/* Sub-sections */
+.sub-section { margin-top: 6px; }
+.sub-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  user-select: none;
+  transition: background .1s, border-color .1s;
+}
+.sub-header:hover { background: var(--bg-hover); border-color: var(--border); }
+.sub-header .arrow {
+  font-size: 9px;
+  color: var(--text-3);
+  transition: transform .18s cubic-bezier(.4,0,.2,1);
+}
+.sub-header.open .arrow { transform: rotate(90deg); }
+.sub-header .tag {
+  margin-left: auto;
+  font-size: 9.5px;
+  font-weight: 500;
+  color: var(--text-3);
+  background: var(--bg-panel-deep);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.sub-body { display: none; padding: 8px 2px 2px; }
+.sub-body.open { display: block; }
+
+/* ── Controls ── */
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  gap: 6px;
+  min-height: 26px;
+}
+.control-row label {
+  font-size: 11.5px;
+  color: var(--text-2);
+  flex-shrink: 0;
+  min-width: 80px;
+  font-weight: 400;
+}
+.control-row input[type=range] {
+  flex: 1;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.control-row input[type=number] {
+  width: 48px;
+  padding: 3px 5px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 11.5px;
+  font-family: var(--font-ui);
+  text-align: right;
+  transition: border-color .12s;
+}
+.control-row input[type=number]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37,99,235,.12);
+}
+.control-row input[type=color] {
+  width: 28px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  cursor: pointer;
+  padding: 1px;
+  box-shadow: var(--shadow-sm);
+}
+.control-row select {
+  flex: 1;
+  padding: 4px 7px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 11.5px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: border-color .12s;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A8A29E' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}
+.control-row select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37,99,235,.12);
+}
+.unit {
+  font-size: 10.5px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  min-width: 14px;
+}
+
+/* Color row: swatch + label combo */
+.color-preview {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   FOOTER / STATUS
+═══════════════════════════════════════════════════ */
+#statusbar {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  background: var(--bg);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+#statusbar span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+#statusbar .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22C55E;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- ── Top bar ── -->
+<div id="topbar">
+  <div id="topbar-brand">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <rect x="1" y="1" width="16" height="16" rx="4" fill="currentColor" opacity=".15"/>
+      <rect x="1" y="1" width="16" height="16" rx="4" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M5 6h8M5 9h6M5 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <h1>Markdown Studio</h1>
+  </div>
+  <button class="btn ghost" id="btn-export-raw" title="Export as plain .md (no styles)">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 10h9M6.5 2v6M4 6l2.5 2.5L9 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Export .md
+  </button>
+  <button class="btn" id="btn-export-styled" title="Export as .md with YAML front matter styles">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 10h9M6.5 2v6M4 6l2.5 2.5L9 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Export Styled .md
+  </button>
+</div>
+
+<div id="main">
+  <!-- ── Left panel ── -->
+  <div id="left">
+    <div id="left-toolbar">
+      <div class="toggle-group">
+        <button class="btn" id="btn-read">Read</button>
+        <button class="btn active" id="btn-rendered">Rendered</button>
+        <button class="btn" id="btn-raw">Raw</button>
+      </div>
+      <span id="drop-hint">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3.5 5.5L6 8l2.5-2.5M2 10h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Drop .md to load
+      </span>
+    </div>
+    <div id="content-area">
+      <div id="rendered"></div>
+      <textarea id="raw" spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <div id="divider"></div>
+
+  <!-- ── Right panel ── -->
+  <div id="right">
+    <div id="right-header">Styles</div>
+
+    <!-- GENERAL -->
+    <div class="panel-section">
+      <div class="panel-header open" data-target="body-general">
+        <span class="arrow">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        General
+      </div>
+      <div class="panel-body open" id="body-general">
+        <div class="control-row">
+          <label>Font family</label>
+          <select id="ctrl-font-family"></select>
+        </div>
+        <div class="control-row">
+          <label>Base size</label>
+          <input type="range" id="ctrl-base-size-range" min="10" max="28" step="1" value="16">
+          <input type="number" id="ctrl-base-size-num" min="10" max="28" value="16">
+          <span class="unit">px</span>
+        </div>
+        <div class="control-row">
+          <label>Line height</label>
+          <input type="range" id="ctrl-line-height-range" min="1.0" max="2.5" step="0.05" value="1.75">
+          <input type="number" id="ctrl-line-height-num" min="1.0" max="2.5" step="0.05" value="1.75">
+        </div>
+        <div class="control-row">
+          <label>Text color</label>
+          <input type="color" id="ctrl-color" value="#1c1917">
+        </div>
+      </div>
+    </div>
+
+    <!-- HEADERS -->
+    <div class="panel-section">
+      <div class="panel-header" data-target="body-headers">
+        <span class="arrow">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Headers
+      </div>
+      <div class="panel-body" id="body-headers">
+
+        <div class="sub-section">
+          <div class="sub-header" data-target="sub-headers-general">
+            <span class="arrow">▶</span> General <span class="tag">h1–h4</span>
+          </div>
+          <div class="sub-body" id="sub-headers-general">
+            <div class="control-row">
+              <label>Font family</label>
+              <select id="ctrl-h-font-family"><option value="inherit">Same as body</option></select>
+            </div>
+            <div class="control-row">
+              <label>Size scale</label>
+              <input type="range" id="ctrl-h-scale-range" min="0.5" max="2.0" step="0.05" value="1.0">
+              <input type="number" id="ctrl-h-scale-num" min="0.5" max="2.0" step="0.05" value="1.0">
+            </div>
+            <div class="control-row">
+              <label>Margin bottom</label>
+              <input type="range" id="ctrl-h-mb-range" min="0" max="2" step="0.1" value="0.4">
+              <input type="number" id="ctrl-h-mb-num" min="0" max="2" step="0.1" value="0.4">
+              <span class="unit">em</span>
+            </div>
+            <div class="control-row">
+              <label>Color</label>
+              <input type="color" id="ctrl-h-color" value="#0f0d0c">
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-header" data-target="sub-h1">
+            <span class="arrow">▶</span> H1 <span class="tag">h1</span>
+          </div>
+          <div class="sub-body" id="sub-h1">
+            <div class="control-row">
+              <label>Size</label>
+              <input type="range" id="ctrl-h1-size-range" min="1" max="4" step="0.1" value="2.1">
+              <input type="number" id="ctrl-h1-size-num" min="1" max="4" step="0.1" value="2.1">
+              <span class="unit">em</span>
+            </div>
+            <div class="control-row">
+              <label>Color</label>
+              <input type="color" id="ctrl-h1-color" value="#0f0d0c">
+            </div>
+            <div class="control-row">
+              <label>Weight</label>
+              <select id="ctrl-h1-weight">
+                <option value="400">Regular</option>
+                <option value="500">Medium</option>
+                <option value="600">SemiBold</option>
+                <option value="700" selected>Bold</option>
+                <option value="800">ExtraBold</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-header" data-target="sub-h2">
+            <span class="arrow">▶</span> H2 <span class="tag">h2</span>
+          </div>
+          <div class="sub-body" id="sub-h2">
+            <div class="control-row">
+              <label>Size</label>
+              <input type="range" id="ctrl-h2-size-range" min="1" max="3" step="0.1" value="1.55">
+              <input type="number" id="ctrl-h2-size-num" min="1" max="3" step="0.1" value="1.55">
+              <span class="unit">em</span>
+            </div>
+            <div class="control-row">
+              <label>Color</label>
+              <input type="color" id="ctrl-h2-color" value="#0f0d0c">
+            </div>
+            <div class="control-row">
+              <label>Weight</label>
+              <select id="ctrl-h2-weight">
+                <option value="400">Regular</option>
+                <option value="500">Medium</option>
+                <option value="600" selected>SemiBold</option>
+                <option value="700">Bold</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-header" data-target="sub-h3">
+            <span class="arrow">▶</span> H3 <span class="tag">h3</span>
+          </div>
+          <div class="sub-body" id="sub-h3">
+            <div class="control-row">
+              <label>Size</label>
+              <input type="range" id="ctrl-h3-size-range" min="0.8" max="2.5" step="0.1" value="1.2">
+              <input type="number" id="ctrl-h3-size-num" min="0.8" max="2.5" step="0.1" value="1.2">
+              <span class="unit">em</span>
+            </div>
+            <div class="control-row">
+              <label>Color</label>
+              <input type="color" id="ctrl-h3-color" value="#0f0d0c">
+            </div>
+            <div class="control-row">
+              <label>Weight</label>
+              <select id="ctrl-h3-weight">
+                <option value="400">Regular</option>
+                <option value="500">Medium</option>
+                <option value="600" selected>SemiBold</option>
+                <option value="700">Bold</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <div class="sub-header" data-target="sub-h4">
+            <span class="arrow">▶</span> H4 <span class="tag">h4</span>
+          </div>
+          <div class="sub-body" id="sub-h4">
+            <div class="control-row">
+              <label>Size</label>
+              <input type="range" id="ctrl-h4-size-range" min="0.8" max="2" step="0.1" value="1.0">
+              <input type="number" id="ctrl-h4-size-num" min="0.8" max="2" step="0.1" value="1.0">
+              <span class="unit">em</span>
+            </div>
+            <div class="control-row">
+              <label>Color</label>
+              <input type="color" id="ctrl-h4-color" value="#0f0d0c">
+            </div>
+            <div class="control-row">
+              <label>Weight</label>
+              <select id="ctrl-h4-weight">
+                <option value="400">Regular</option>
+                <option value="500">Medium</option>
+                <option value="600" selected>SemiBold</option>
+                <option value="700">Bold</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PARAGRAPH -->
+    <div class="panel-section">
+      <div class="panel-header" data-target="body-paragraph">
+        <span class="arrow">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Paragraph
+      </div>
+      <div class="panel-body" id="body-paragraph">
+        <div class="control-row">
+          <label>Color</label>
+          <input type="color" id="ctrl-p-color" value="#3c3733">
+        </div>
+        <div class="control-row">
+          <label>Line height</label>
+          <input type="range" id="ctrl-p-lh-range" min="1.0" max="2.5" step="0.05" value="1.75">
+          <input type="number" id="ctrl-p-lh-num" min="1.0" max="2.5" step="0.05" value="1.75">
+        </div>
+        <div class="control-row">
+          <label>Margin bottom</label>
+          <input type="range" id="ctrl-p-mb-range" min="0" max="3" step="0.1" value="1.1">
+          <input type="number" id="ctrl-p-mb-num" min="0" max="3" step="0.1" value="1.1">
+          <span class="unit">em</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINKS -->
+    <div class="panel-section">
+      <div class="panel-header" data-target="body-links">
+        <span class="arrow">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Links
+      </div>
+      <div class="panel-body" id="body-links">
+        <div class="control-row">
+          <label>Color</label>
+          <input type="color" id="ctrl-link-color" value="#2563eb">
+        </div>
+        <div class="control-row">
+          <label>Decoration</label>
+          <select id="ctrl-link-decoration">
+            <option value="underline" selected>Underline</option>
+            <option value="none">None</option>
+            <option value="dotted underline">Dotted</option>
+            <option value="dashed underline">Dashed</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE -->
+    <div class="panel-section">
+      <div class="panel-header" data-target="body-code">
+        <span class="arrow">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Code
+      </div>
+      <div class="panel-body" id="body-code">
+        <div class="control-row">
+          <label>Font family</label>
+          <select id="ctrl-code-font">
+            <option value="'JetBrains Mono', 'Fira Mono', monospace" selected>JetBrains Mono</option>
+            <option value="'Fira Mono', monospace">Fira Mono</option>
+            <option value="'Source Code Pro', monospace">Source Code Pro</option>
+            <option value="'Courier New', monospace">Courier New</option>
+            <option value="monospace">System mono</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label>Background</label>
+          <input type="color" id="ctrl-code-bg" value="#f4f1ed">
+        </div>
+        <div class="control-row">
+          <label>Text color</label>
+          <input type="color" id="ctrl-code-color" value="#6b21a8">
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOCKQUOTE -->
+    <div class="panel-section">
+      <div class="panel-header" data-target="body-blockquote">
+        <span class="arrow">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        Blockquote
+      </div>
+      <div class="panel-body" id="body-blockquote">
+        <div class="control-row">
+          <label>Border color</label>
+          <input type="color" id="ctrl-bq-border-color" value="#2563eb">
+        </div>
+        <div class="control-row">
+          <label>Border width</label>
+          <input type="range" id="ctrl-bq-bw-range" min="1" max="8" step="1" value="3">
+          <input type="number" id="ctrl-bq-bw-num" min="1" max="8" value="3">
+          <span class="unit">px</span>
+        </div>
+        <div class="control-row">
+          <label>Text color</label>
+          <input type="color" id="ctrl-bq-color" value="#6b6560">
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /#right -->
+</div><!-- /#main -->
+
+<!-- Status bar -->
+<div id="statusbar">
+  <span class="dot"></span>
+  <span id="status-text">Ready</span>
+  <span style="margin-left:auto; font-size:10.5px; color:var(--text-3)">
+    YAML front matter &middot; drag to load &middot; <kbd style="font-family:inherit;background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;padding:0 4px;font-size:10px">Export</kbd> to save
+  </span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+//  GOOGLE FONTS — top 24 by popularity
+// ═══════════════════════════════════════════════════════
+const GOOGLE_FONTS = [
+  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Source Sans 3',
+  'Oswald', 'Raleway', 'Poppins', 'Merriweather', 'Ubuntu',
+  'Nunito', 'Playfair Display', 'Roboto Slab', 'PT Sans', 'Lora',
+  'Mulish', 'Noto Sans', 'Rubik', 'Dosis',
+  'Josefin Sans', 'PT Serif', 'Libre Franklin', 'Crimson Text'
+];
+
+const loadedFonts = new Set(['Inter']); // preloaded in <head>
+
+function loadGoogleFont(family) {
+  if (loadedFonts.has(family)) return;
+  loadedFonts.add(family);
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@400;600;700&display=swap`;
+  document.head.appendChild(link);
+}
+
+function populateFontSelect(sel, includeInherit) {
+  if (includeInherit) {
+    const opt = document.createElement('option');
+    opt.value = 'inherit';
+    opt.textContent = '— Same as body —';
+    sel.appendChild(opt);
+  }
+  GOOGLE_FONTS.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = `'${f}', sans-serif`;
+    opt.textContent = f;
+    sel.appendChild(opt);
+  });
+  [['Georgia, serif','Georgia'],['Times New Roman, serif','Times New Roman'],
+   ['system-ui, sans-serif','System UI']].forEach(([v,l]) => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = l;
+    sel.appendChild(opt);
+  });
+}
+
+populateFontSelect(document.getElementById('ctrl-font-family'), false);
+// Set Inter as default
+document.getElementById('ctrl-font-family').value = "'Inter', sans-serif";
+populateFontSelect(document.getElementById('ctrl-h-font-family'), true);
+
+// ═══════════════════════════════════════════════════════
+//  YAML FRONT MATTER
+// ═══════════════════════════════════════════════════════
+function parseFrontMatter(text) {
+  const FM_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+  const m = text.match(FM_RE);
+  if (!m) return { meta: {}, body: text };
+  return { meta: parseSimpleYaml(m[1]), body: text.slice(m[0].length) };
+}
+
+function parseSimpleYaml(str) {
+  const result = {};
+  const lines = str.split('\n');
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const km = line.match(/^(\w[\w-]*):\s*(.*)/);
+    if (!km) { i++; continue; }
+    const key = km[1], rest = km[2].trim();
+    if (rest.startsWith('{')) {
+      result[key] = parseInlineObject(rest); i++;
+    } else if (rest === '') {
+      const nested = {}; i++;
+      while (i < lines.length && /^  /.test(lines[i])) {
+        const nl = lines[i].trim();
+        const nm = nl.match(/^(\w[\w-]*):\s*(.*)/);
+        if (nm) nested[nm[1]] = nm[2].trim().startsWith('{')
+          ? parseInlineObject(nm[2].trim()) : parseScalar(nm[2].trim());
+        i++;
+      }
+      result[key] = nested;
+    } else { result[key] = parseScalar(rest); i++; }
+  }
+  return result;
+}
+
+function parseInlineObject(str) {
+  const inner = str.replace(/^\{/, '').replace(/\}$/, '').trim();
+  const obj = {};
+  inner.split(',').forEach(pair => {
+    const m = pair.trim().match(/^(\w[\w-]*):\s*(.*)/);
+    if (m) obj[m[1]] = parseScalar(m[2].trim());
+  });
+  return obj;
+}
+
+function parseScalar(v) {
+  v = v.trim().replace(/^["']|["']$/g, '');
+  const n = Number(v);
+  return (!isNaN(n) && v !== '') ? n : v;
+}
+
+function serializeFrontMatter(meta) {
+  const lines = ['---'];
+  for (const [k, v] of Object.entries(meta)) {
+    if (typeof v === 'object' && v !== null) {
+      lines.push(`${k}:`);
+      for (const [sk, sv] of Object.entries(v)) {
+        if (typeof sv === 'object' && sv !== null) {
+          const inner = Object.entries(sv).map(([a,b]) => `${a}: ${JSON.stringify(b)}`).join(', ');
+          lines.push(`  ${sk}: { ${inner} }`);
+        } else { lines.push(`  ${sk}: ${JSON.stringify(sv)}`); }
+      }
+    } else { lines.push(`${k}: ${JSON.stringify(v)}`); }
+  }
+  lines.push('---');
+  return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let currentBody = '';
+let currentMeta = {};
+
+// ═══════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════
+const renderedEl = document.getElementById('rendered');
+const rawEl = document.getElementById('raw');
+
+function render() {
+  renderedEl.innerHTML = marked.parse(currentBody);
+}
+
+// ═══════════════════════════════════════════════════════
+//  CSS VAR UPDATES
+// ═══════════════════════════════════════════════════════
+function applyCtrl(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const v = el.value;
+
+  // Load Google Font on demand
+  if (id === 'ctrl-font-family' || id === 'ctrl-h-font-family') {
+    const name = v.replace(/['"]/g,'').split(',')[0].trim();
+    if (GOOGLE_FONTS.includes(name)) loadGoogleFont(name);
+  }
+
+  switch(id) {
+    case 'ctrl-font-family':
+      renderedEl.style.setProperty('--md-font-family', v); break;
+    case 'ctrl-base-size-num':
+      renderedEl.style.setProperty('--md-base-size', v + 'px'); break;
+    case 'ctrl-line-height-num':
+      renderedEl.style.setProperty('--md-line-height', v); break;
+    case 'ctrl-color':
+      renderedEl.style.setProperty('--md-color', v); break;
+    case 'ctrl-h-font-family':
+      renderedEl.style.setProperty('--md-h-font-family', v); break;
+    case 'ctrl-h-scale-num':
+      renderedEl.style.setProperty('--md-h-scale', v); break;
+    case 'ctrl-h-mb-num':
+      renderedEl.style.setProperty('--md-h-margin-bottom', v + 'em'); break;
+    case 'ctrl-h-color':
+      renderedEl.style.setProperty('--md-h-color', v); break;
+    case 'ctrl-h1-size-num':
+      renderedEl.style.setProperty('--md-h1-size', v + 'em'); break;
+    case 'ctrl-h1-color':
+      renderedEl.style.setProperty('--md-h1-color', v); break;
+    case 'ctrl-h1-weight':
+      renderedEl.style.setProperty('--md-h1-weight', v); break;
+    case 'ctrl-h2-size-num':
+      renderedEl.style.setProperty('--md-h2-size', v + 'em'); break;
+    case 'ctrl-h2-color':
+      renderedEl.style.setProperty('--md-h2-color', v); break;
+    case 'ctrl-h2-weight':
+      renderedEl.style.setProperty('--md-h2-weight', v); break;
+    case 'ctrl-h3-size-num':
+      renderedEl.style.setProperty('--md-h3-size', v + 'em'); break;
+    case 'ctrl-h3-color':
+      renderedEl.style.setProperty('--md-h3-color', v); break;
+    case 'ctrl-h3-weight':
+      renderedEl.style.setProperty('--md-h3-weight', v); break;
+    case 'ctrl-h4-size-num':
+      renderedEl.style.setProperty('--md-h4-size', v + 'em'); break;
+    case 'ctrl-h4-color':
+      renderedEl.style.setProperty('--md-h4-color', v); break;
+    case 'ctrl-h4-weight':
+      renderedEl.style.setProperty('--md-h4-weight', v); break;
+    case 'ctrl-p-color':
+      renderedEl.style.setProperty('--md-p-color', v); break;
+    case 'ctrl-p-lh-num':
+      renderedEl.style.setProperty('--md-p-line-height', v); break;
+    case 'ctrl-p-mb-num':
+      renderedEl.style.setProperty('--md-p-margin', `0 0 ${v}em`); break;
+    case 'ctrl-link-color':
+      renderedEl.style.setProperty('--md-link-color', v); break;
+    case 'ctrl-link-decoration':
+      renderedEl.style.setProperty('--md-link-decoration', v); break;
+    case 'ctrl-code-font':
+      renderedEl.style.setProperty('--md-code-font', v); break;
+    case 'ctrl-code-bg':
+      renderedEl.style.setProperty('--md-code-bg', v);
+      renderedEl.style.setProperty('--md-pre-bg', v); break;
+    case 'ctrl-code-color':
+      renderedEl.style.setProperty('--md-code-color', v); break;
+    case 'ctrl-bq-border-color':
+    case 'ctrl-bq-bw-num': {
+      const col = document.getElementById('ctrl-bq-border-color').value;
+      const w   = document.getElementById('ctrl-bq-bw-num').value;
+      renderedEl.style.setProperty('--md-bq-border', `${w}px solid ${col}`); break;
+    }
+    case 'ctrl-bq-color':
+      renderedEl.style.setProperty('--md-bq-color', v); break;
+  }
+}
+
+function linkRangeNum(rangeId, numId) {
+  const r = document.getElementById(rangeId);
+  const n = document.getElementById(numId);
+  r.addEventListener('input', () => { n.value = r.value; applyCtrl(numId); });
+  n.addEventListener('input', () => { r.value = n.value; applyCtrl(numId); });
+}
+
+[
+  ['ctrl-base-size-range',  'ctrl-base-size-num'],
+  ['ctrl-line-height-range','ctrl-line-height-num'],
+  ['ctrl-h-scale-range',    'ctrl-h-scale-num'],
+  ['ctrl-h-mb-range',       'ctrl-h-mb-num'],
+  ['ctrl-h1-size-range',    'ctrl-h1-size-num'],
+  ['ctrl-h2-size-range',    'ctrl-h2-size-num'],
+  ['ctrl-h3-size-range',    'ctrl-h3-size-num'],
+  ['ctrl-h4-size-range',    'ctrl-h4-size-num'],
+  ['ctrl-p-lh-range',       'ctrl-p-lh-num'],
+  ['ctrl-p-mb-range',       'ctrl-p-mb-num'],
+  ['ctrl-bq-bw-range',      'ctrl-bq-bw-num'],
+].forEach(([r,n]) => linkRangeNum(r,n));
+
+[
+  'ctrl-font-family','ctrl-h-font-family',
+  'ctrl-color','ctrl-h-color',
+  'ctrl-h1-color','ctrl-h1-weight',
+  'ctrl-h2-color','ctrl-h2-weight',
+  'ctrl-h3-color','ctrl-h3-weight',
+  'ctrl-h4-color','ctrl-h4-weight',
+  'ctrl-p-color','ctrl-link-color','ctrl-link-decoration',
+  'ctrl-code-font','ctrl-code-bg','ctrl-code-color',
+  'ctrl-bq-border-color','ctrl-bq-color',
+].forEach(id => {
+  document.getElementById(id).addEventListener('input',  () => applyCtrl(id));
+  document.getElementById(id).addEventListener('change', () => applyCtrl(id));
+});
+
+// ═══════════════════════════════════════════════════════
+//  APPLY STYLES FROM META → CONTROLS
+// ═══════════════════════════════════════════════════════
+function setCtrl(id, val) {
+  if (val === undefined || val === null) return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = val;
+  const rangeId = id.replace(/-num$/, '-range');
+  const rng = document.getElementById(rangeId);
+  if (rng) rng.value = val;
+  applyCtrl(id);
+}
+
+function applyStylesFromMeta(s) {
+  if (!s) return;
+  if (s.fontFamily) {
+    const sel = document.getElementById('ctrl-font-family');
+    const match = [...sel.options].find(o =>
+      o.value.replace(/['"]/g,'').split(',')[0].trim() === s.fontFamily ||
+      o.textContent === s.fontFamily
+    );
+    if (match) { sel.value = match.value; applyCtrl('ctrl-font-family'); }
+  }
+  if (s.baseFontSize) setCtrl('ctrl-base-size-num', s.baseFontSize);
+  if (s.lineHeight)   setCtrl('ctrl-line-height-num', s.lineHeight);
+  if (s.color)        setCtrl('ctrl-color', s.color);
+
+  const h = s.headers || {};
+  if (h.scale)        setCtrl('ctrl-h-scale-num', h.scale);
+  if (h.marginBottom) setCtrl('ctrl-h-mb-num', h.marginBottom);
+  if (h.color)        setCtrl('ctrl-h-color', h.color);
+
+  ['h1','h2','h3','h4'].forEach(t => {
+    const hs = s[t] || {};
+    if (hs.fontSize)    setCtrl(`ctrl-${t}-size-num`, hs.fontSize);
+    if (hs.color)       setCtrl(`ctrl-${t}-color`, hs.color);
+    if (hs.fontWeight) {
+      const el = document.getElementById(`ctrl-${t}-weight`);
+      if (el) { el.value = String(hs.fontWeight); applyCtrl(`ctrl-${t}-weight`); }
+    }
+  });
+
+  const p = s.p || {};
+  if (p.color)        setCtrl('ctrl-p-color', p.color);
+  if (p.lineHeight)   setCtrl('ctrl-p-lh-num', p.lineHeight);
+  if (p.marginBottom) setCtrl('ctrl-p-mb-num', p.marginBottom);
+
+  const lk = s.link || {};
+  if (lk.color)      setCtrl('ctrl-link-color', lk.color);
+  if (lk.decoration) {
+    const el = document.getElementById('ctrl-link-decoration');
+    if (el) { el.value = lk.decoration; applyCtrl('ctrl-link-decoration'); }
+  }
+
+  const bq = s.blockquote || {};
+  if (bq.borderColor) setCtrl('ctrl-bq-border-color', bq.borderColor);
+  if (bq.borderWidth) setCtrl('ctrl-bq-bw-num', bq.borderWidth);
+  if (bq.color)       setCtrl('ctrl-bq-color', bq.color);
+}
+
+// ═══════════════════════════════════════════════════════
+//  COLLECT STYLES FROM CONTROLS
+// ═══════════════════════════════════════════════════════
+const gv = id => document.getElementById(id)?.value ?? '';
+const gn = id => parseFloat(document.getElementById(id)?.value ?? 0);
+
+function collectStyles() {
+  return {
+    fontFamily:   gv('ctrl-font-family').replace(/['"]/g,'').split(',')[0].trim(),
+    baseFontSize: gn('ctrl-base-size-num'),
+    lineHeight:   gn('ctrl-line-height-num'),
+    color:        gv('ctrl-color'),
+    headers: {
+      scale:        gn('ctrl-h-scale-num'),
+      marginBottom: gn('ctrl-h-mb-num'),
+      color:        gv('ctrl-h-color'),
+    },
+    h1: { fontSize: gn('ctrl-h1-size-num'), color: gv('ctrl-h1-color'), fontWeight: parseInt(gv('ctrl-h1-weight')) },
+    h2: { fontSize: gn('ctrl-h2-size-num'), color: gv('ctrl-h2-color'), fontWeight: parseInt(gv('ctrl-h2-weight')) },
+    h3: { fontSize: gn('ctrl-h3-size-num'), color: gv('ctrl-h3-color'), fontWeight: parseInt(gv('ctrl-h3-weight')) },
+    h4: { fontSize: gn('ctrl-h4-size-num'), color: gv('ctrl-h4-color'), fontWeight: parseInt(gv('ctrl-h4-weight')) },
+    p: {
+      color:        gv('ctrl-p-color'),
+      lineHeight:   gn('ctrl-p-lh-num'),
+      marginBottom: gn('ctrl-p-mb-num'),
+    },
+    link: { color: gv('ctrl-link-color'), decoration: gv('ctrl-link-decoration') },
+    code: {
+      font:       gv('ctrl-code-font').replace(/['"]/g,'').split(',')[0].trim(),
+      background: gv('ctrl-code-bg'),
+      color:      gv('ctrl-code-color'),
+    },
+    blockquote: {
+      borderColor: gv('ctrl-bq-border-color'),
+      borderWidth: gn('ctrl-bq-bw-num'),
+      color:       gv('ctrl-bq-color'),
+    },
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOAD CONTENT
+// ═══════════════════════════════════════════════════════
+function setStatus(msg) {
+  document.getElementById('status-text').textContent = msg;
+}
+
+function loadText(text, filename) {
+  const { meta, body } = parseFrontMatter(text);
+  currentMeta = meta;
+  currentBody = body;
+  rawEl.value = text;
+  render();
+  if (meta.styles) applyStylesFromMeta(meta.styles);
+  setStatus(filename ? `Loaded: ${filename}` : 'Ready');
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAG & DROP
+// ═══════════════════════════════════════════════════════
+const contentArea = document.getElementById('content-area');
+
+contentArea.addEventListener('dragover', e => {
+  e.preventDefault();
+  contentArea.classList.add('drag-over');
+});
+['dragleave','dragend'].forEach(ev =>
+  contentArea.addEventListener(ev, () => contentArea.classList.remove('drag-over'))
+);
+contentArea.addEventListener('drop', e => {
+  e.preventDefault();
+  contentArea.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => loadText(ev.target.result, file.name);
+  reader.readAsText(file);
+});
+
+// ═══════════════════════════════════════════════════════
+//  TOGGLE RENDERED / RAW
+// ═══════════════════════════════════════════════════════
+function setMode(mode) {
+  // Sync raw→rendered if leaving raw
+  if (mode !== 'raw') {
+    const { meta, body } = parseFrontMatter(rawEl.value);
+    currentMeta = meta; currentBody = body;
+    render();
+  }
+
+  renderedEl.style.display = mode === 'raw' ? 'none' : '';
+  rawEl.style.display      = mode === 'raw' ? 'block' : 'none';
+
+  document.getElementById('btn-read').classList.toggle('active',     mode === 'read');
+  document.getElementById('btn-rendered').classList.toggle('active', mode === 'rendered');
+  document.getElementById('btn-raw').classList.toggle('active',      mode === 'raw');
+
+  document.body.classList.toggle('read-mode', mode === 'read');
+}
+
+document.getElementById('btn-read').addEventListener('click',     () => setMode('read'));
+document.getElementById('btn-rendered').addEventListener('click', () => setMode('rendered'));
+document.getElementById('btn-raw').addEventListener('click',      () => setMode('raw'));
+
+// ═══════════════════════════════════════════════════════
+//  COLLAPSIBLES
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('.panel-header').forEach(h => {
+  h.addEventListener('click', () => {
+    const body = document.getElementById(h.dataset.target);
+    const open = body.classList.toggle('open');
+    h.classList.toggle('open', open);
+  });
+});
+document.querySelectorAll('.sub-header').forEach(h => {
+  h.addEventListener('click', () => {
+    const body = document.getElementById(h.dataset.target);
+    const open = body.classList.toggle('open');
+    h.classList.toggle('open', open);
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════
+function download(filename, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+document.getElementById('btn-export-raw').addEventListener('click', () => {
+  download('document.md', currentBody);
+  setStatus('Exported raw .md');
+});
+
+document.getElementById('btn-export-styled').addEventListener('click', () => {
+  const meta = { ...currentMeta, styles: collectStyles() };
+  const fm = serializeFrontMatter(meta);
+  download('document.md', fm + '\n' + currentBody);
+  setStatus('Exported styled .md with YAML front matter');
+});
+
+// ═══════════════════════════════════════════════════════
+//  DEFAULT CONTENT
+// ═══════════════════════════════════════════════════════
+const DEFAULT_MD = `# Welcome to Markdown Studio
+
+Drag a \`.md\` file onto the left panel to load your content, or switch to **Raw** to edit directly.
+
+## Typography
+
+Use the panel on the right to style every element. All changes apply live.
+
+### Headings
+
+Scale all headings at once with *General Headers → Size scale*, or fine-tune each level individually.
+
+#### H4 example
+
+A fourth-level heading with its own size, color, and weight controls.
+
+---
+
+## Paragraphs
+
+Adjust **line height**, **color**, and **bottom margin** in the *Paragraph* section.
+
+> Blockquotes get a left border that you can color and resize. This text uses the *Blockquote* color setting.
+
+## Code
+
+Inline \`code\` and fenced code blocks:
+
+\`\`\`js
+const { meta, body } = parseFrontMatter(text);
+console.log(meta.styles.fontFamily); // "Inter"
+\`\`\`
+
+## Links and lists
+
+Visit [Markdown Guide](https://www.markdownguide.org) for syntax reference.
+
+- **Export Raw .md** — clean markdown, no front matter
+- **Export Styled .md** — YAML front matter embeds your style choices
+- Drop the exported file back in to restore everything
+
+1. Pick a font from 24 Google Fonts
+2. Adjust sizes, colors, spacing
+3. Export and share
+`;
+
+loadText(DEFAULT_MD);
+</script>
+</body>
+</html>
