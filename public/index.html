@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none'%3E%3Crect x='2' y='2' width='28' height='28' rx='7' fill='%23B8985A' opacity='.18'/%3E%3Crect x='2' y='2' width='28' height='28' rx='7' stroke='%23B8985A' stroke-width='2.5'/%3E%3Cpath d='M9 11h14M9 16h11M9 21h8' stroke='%23B8985A' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 /* ═══════════════════════════════════════════════════
    DESIGN TOKENS  (Cursor-inspired warm neutral palette)
@@ -95,7 +96,7 @@ body.read-mode #topbar {
 }
 
 #topbar-brand svg {
-  color: var(--accent);
+  color: #B8985A;
   flex-shrink: 0;
 }
 
@@ -1372,12 +1373,7 @@ function setColorValue(ctrlId, value, userAction = false) {
 // Reset a control to page-load default; removes override status so it rejoins cascade.
 function resetColorValue(ctrlId) {
   overriddenColors.delete(ctrlId);
-  // Find the parent's current value so the reset reflects what the parent shows now
-  const parentId = Object.entries(COLOR_CHILDREN).find(([,ch]) => ch.includes(ctrlId))?.[0];
-  const targetValue = parentId
-    ? (document.getElementById(parentId)?.value || COLOR_DEFAULT)
-    : COLOR_DEFAULT;
-  setColorValue(ctrlId, targetValue, false);
+  setColorValue(ctrlId, COLOR_DEFAULT, false);
 }
 
 // Wire color inputs — user changing a picker marks it as overridden
