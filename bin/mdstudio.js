@@ -23,11 +23,18 @@ Opens a markdown file in the browser-based Markdown Studio editor,
 with live styling controls and export to PDF / Word / raw .md.
 
 USAGE
-  mdstudio [file]        Open a .md file
-  cat file.md | mdstudio Pipe markdown from stdin
-  mdstudio               Open with empty editor
-  mdstudio --help        Show this help
-  mdstudio --schema      Print the full styles schema (for LLMs)
+  mdstudio [file]              Open a .md file
+  mdstudio [file] --mode read  Open directly in read mode (hides editor + controls)
+  mdstudio [file] --mode raw   Open showing raw markdown source
+  cat file.md | mdstudio       Pipe markdown from stdin
+  mdstudio                     Open with empty editor
+  mdstudio --help              Show this help
+  mdstudio --schema            Print the full styles schema (for LLMs)
+
+MODES
+  rendered  (default) Styled preview with editor controls visible
+  read      Clean reading view — hides toolbar and styling panel
+  raw       Shows raw markdown source
 
 STYLED MARKDOWN FORMAT
   Markdown Studio extends standard .md files with an optional YAML
@@ -143,13 +150,31 @@ EXAMPLE — editorial article with colored heading tiers
   ---
 `;
 
+// ── Parse args ────────────────────────────────────────────
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let file = null;
+  let mode = null;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--help' || args[i] === '-h') { console.log(HELP);   process.exit(0); }
+    if (args[i] === '--schema')                    { console.log(SCHEMA); process.exit(0); }
+    if (args[i] === '--mode' || args[i] === '-m') {
+      mode = args[++i];
+      if (!['read', 'rendered', 'raw'].includes(mode)) {
+        console.error(`mdstudio: unknown mode "${mode}" — use read, rendered, or raw`);
+        process.exit(1);
+      }
+    } else if (!file) {
+      file = args[i];
+    }
+  }
+
+  return { file, mode };
+}
+
 // ── Read content ───────────────────────────────────────────
-async function readContent() {
-  const file = process.argv[2];
-
-  if (file === '--help' || file === '-h') { console.log(HELP);   process.exit(0); }
-  if (file === '--schema')                { console.log(SCHEMA); process.exit(0); }
-
+async function readContent(file) {
   if (file) {
     const resolved = path.resolve(file);
     if (!fs.existsSync(resolved)) {
@@ -223,13 +248,14 @@ function openBrowser(url) {
 
 // ── Main ───────────────────────────────────────────────────
 (async () => {
-  const content = await readContent();
+  const { file, mode } = parseArgs();
+  const content = await readContent(file);
 
   let url = BASE_URL;
-  if (content) {
-    const encoded = Buffer.from(content, 'utf-8').toString('base64');
-    url = `${BASE_URL}/#md=${encodeURIComponent(encoded)}`;
-  }
+  const params = new URLSearchParams();
+  if (content) params.set('md', encodeURIComponent(Buffer.from(content, 'utf-8').toString('base64')));
+  if (mode)    params.set('mode', mode);
+  if (params.toString()) url = `${BASE_URL}/#${params.toString()}`;
 
   const running = await isServerRunning();
   if (!running) {
