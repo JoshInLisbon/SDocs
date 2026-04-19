@@ -1,0 +1,137 @@
+{
+  "commit": "71b06adcce080ac3b964a5d1ed82e4c7a6b6a3f8",
+  "builtAt": "2026-04-19T07:13:41Z",
+  "repo": "https://github.com/espressoplease/SDocs",
+  "files": [
+    {
+      "path": "/brotli_wasm_bg.wasm",
+      "sha256": "9ef0a025046bf7d87b7cdb8eac3f73a5c8fea2f1adb848cc9768345573fcd8a9",
+      "bytes": 1056860
+    },
+    {
+      "path": "/brotli-wasm-v1.js",
+      "sha256": "08b8126c78feff5b7a2a3349bd34fe6359b1829e2c1a59af59c1611e885882ae",
+      "bytes": 14890
+    },
+    {
+      "path": "/css/layout.css",
+      "sha256": "97a5eaf8b58c5df5bb21307733e806d7956ce9c2d1408575398976d2d880b5bf",
+      "bytes": 6619
+    },
+    {
+      "path": "/css/mobile.css",
+      "sha256": "b58a249e5d555e7c114920fd7cd0fe53051a51884f9ab9d8da00cc43a9969359",
+      "bytes": 6553
+    },
+    {
+      "path": "/css/panel.css",
+      "sha256": "435a659b58c9ee709f04b1a990d1e5902ea625aa7a0336330e0fd863a741811b",
+      "bytes": 9549
+    },
+    {
+      "path": "/css/rendered.css",
+      "sha256": "66142a0473c9283194fa4656b441b53beece04e58ceeea272191b3e38f67c77f",
+      "bytes": 17280
+    },
+    {
+      "path": "/css/tokens.css",
+      "sha256": "16a97ea63c1d9ca9958070a1494805d38c507e969ae9d3ff655ff7c68aa1fd27",
+      "bytes": 3974
+    },
+    {
+      "path": "/css/write.css",
+      "sha256": "df33f6aaaab79d329ff75286b5e24438afe2eb3688f9f571197701c6882f389d",
+      "bytes": 2870
+    },
+    {
+      "path": "/images/examples.png",
+      "sha256": "d6f13b241cead15cd831660124efe1657ec77f2c1ee4de14cbdbed369c05e014",
+      "bytes": 388253
+    },
+    {
+      "path": "/index.html",
+      "sha256": "9ededfeed37eadb8b544ba609fd94ab85be29ee3667c3fd2e89a3a0af203548a",
+      "bytes": 42476
+    },
+    {
+      "path": "/legal.md",
+      "sha256": "a90284e517a6dbf20f704ec659cae57b7938d8de8366b03323d01e61956fe3f7",
+      "bytes": 10636
+    },
+    {
+      "path": "/sdoc.md",
+      "sha256": "454f4defa9dee7fe0f5f4da53a7e789555b90e3f9de9c96027e8f125d282ce57",
+      "bytes": 39329
+    },
+    {
+      "path": "/sdocs-app.js",
+      "sha256": "1a4adf7845f201a51563ca76f127d3b647335d15b39ea4a14583bb7f7e1f4b2a",
+      "bytes": 42229
+    },
+    {
+      "path": "/sdocs-charts.js",
+      "sha256": "d80c476fb9eb7387685ba9affb906553422f3617212066809735abce37c44fad",
+      "bytes": 32868
+    },
+    {
+      "path": "/sdocs-chrome.js",
+      "sha256": "6f395a0e770074f55b6d1fbbcbf84c9ad11100a3a5fddf6f847b761dc1e333c7",
+      "bytes": 8266
+    },
+    {
+      "path": "/sdocs-controls.js",
+      "sha256": "371a4e35d0b3c126e4b63a55d740147822a8044d2a7a9831ded56c39f6098f8b",
+      "bytes": 14787
+    },
+    {
+      "path": "/sdocs-export.js",
+      "sha256": "7fbe0df9271a845e3f402df767f7912601c2ee581b8b3b8f9558d2fd7b101d06",
+      "bytes": 44162
+    },
+    {
+      "path": "/sdocs-slugify.js",
+      "sha256": "4f329bc582916ac612e4a5c6c8fb12e9a414ddd586bbcaa8891ce158f9235bc4",
+      "bytes": 441
+    },
+    {
+      "path": "/sdocs-state.js",
+      "sha256": "c85595a6eafaa4c387ff796391969ced52d9b9d4ddf43c05690a5354d1584582",
+      "bytes": 2636
+    },
+    {
+      "path": "/sdocs-styles.js",
+      "sha256": "f53cdad204fbb92deca9b4a758844134abd2b2f3197bd4804a0de44142b91408",
+      "bytes": 24901
+    },
+    {
+      "path": "/sdocs-theme.js",
+      "sha256": "97a8808603436fa3523631154b1ebfff2c080f0cb59e76a429de5a436d5adac0",
+      "bytes": 9374
+    },
+    {
+      "path": "/sdocs-write.js",
+      "sha256": "467e5e9c5a2616f4e49c408e538f31c2b2fbb7cbdbf3ac4cc6a1b00b53c1b759",
+      "bytes": 25336
+    },
+    {
+      "path": "/sdocs-yaml.js",
+      "sha256": "1b87ca97609143314231ba4ff3997b362e25a4295a88abaee9f5154449a6d955",
+      "bytes": 3390
+    },
+    {
+      "path": "/sw.js",
+      "sha256": "f8aaae0b1c0eb25c990f6a60ab7a06bb1b01b03bd3e45b015b8d498e4f55ee81",
+      "bytes": 4657
+    },
+    {
+      "path": "/vendor/marked.min.js",
+      "sha256": "e479cd780b6f4fe1494c6b4087505fa987f27f5ba6e0730a588e8398a07ee6e1",
+      "bytes": 35161
+    },
+    {
+      "path": "/vendor/purify.min.js",
+      "sha256": "a95e028e5efd6a7413d1d18d6d9f918fdad19e2be6e962fcbaa10ab1b364725c",
+      "bytes": 23274
+    }
+  ]
+}
